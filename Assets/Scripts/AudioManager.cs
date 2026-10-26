@@ -22,6 +22,7 @@ public class AudioManager : MonoBehaviour
 
     void Update()
     {
+        if (introSource == null || normalSource == null) return;
         if (switched) return;
 
         timer += Time.deltaTime;
