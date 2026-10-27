@@ -15,6 +15,10 @@ public class CherryController : MonoBehaviour
     [Tooltip("How far outside the level to start/end (in tiles).")]
     public float outsideDistance = 30f;
 
+    [Header("Level Center")]
+    [Tooltip("World position of the level's center. (7.5, -10, 0) for topLeftWorld (-6, 4).")]
+    public Vector3 levelCenter = new Vector3(7.5f, -10f, 0f);
+
     // Current cherry state
     private GameObject currentCherry;
     private Vector3 cherryStart;
@@ -55,8 +59,8 @@ public class CherryController : MonoBehaviour
     {
         if (cherryPrefab == null) return;
 
-        // Level center in world space
-        Vector3 center = LevelGrid.Instance.GridToWorld(LevelGrid.Rows / 2, LevelGrid.Cols / 2);
+        // Level center in world space (set in the Inspector)
+        Vector3 center = levelCenter;
 
         // Random angle → random direction
         float angleDeg = Random.Range(0f, 360f);

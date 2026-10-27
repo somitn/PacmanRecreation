@@ -46,9 +46,9 @@ public class PacStudentController : MonoBehaviour
         // Snap to the exact center of the grid cell
         transform.position = LevelGrid.Instance.GridToWorld(currentGrid.y, currentGrid.x);
 
-        // Brief: PacStudent starts facing right
-        currentInput = Direction.Right;
-        lastInput = Direction.Right;
+        // PacStudent starts facing right but does not move until input
+        currentInput = Direction.None;
+        lastInput = Direction.None;
     }
 
     // -----------------------------------------------------------------
@@ -117,12 +117,6 @@ public class PacStudentController : MonoBehaviour
     private bool CanMove(Direction dir)
     {
         Vector2Int target = GetTargetCell(currentGrid, dir);
-
-        // Tunnel wrap: if we're at a tunnel row and stepping off the edge,
-        // treat it as walkable (the level has tunnels on the left/right)
-        if (LevelGrid.Instance.IsTunnel(target.y, target.x))
-            return true;
-
         return LevelGrid.Instance.IsWalkable(target.y, target.x);
     }
 
@@ -149,16 +143,12 @@ public class PacStudentController : MonoBehaviour
     {
         Vector2Int target = GetTargetCell(currentGrid, dir);
 
-        // Tunnel wrap: if the target is off the edge, wrap to the other side
-        if (LevelGrid.Instance.IsTunnel(target.y, target.x))
-        {
-            if (target.y < 0)      target.y = LevelGrid.Cols - 1;
-            else if (target.y >= LevelGrid.Cols) target.y = 0;
-        }
-        
+        // Start dust when we begin moving
         if (dustEffect != null && !dustEffect.isPlaying)
-        
+        {
             dustEffect.Play();
+        }
+
         // Update grid tracking
         currentGrid = target;
 
@@ -166,6 +156,8 @@ public class PacStudentController : MonoBehaviour
         lerpTarget = LevelGrid.Instance.GridToWorld(target.y, target.x);
         lerpProgress = 0f;
         isLerping = true;
+
+        if (animator != null) animator.speed = 1f;
 
         // Animation
         PlayAnimation(dir);
@@ -208,12 +200,13 @@ public class PacStudentController : MonoBehaviour
 
         if (dustEffect != null)
             dustEffect.Stop();
+
+        if (animator != null) animator.speed = 0f;
     }
 
     // -----------------------------------------------------------------
     // Play the correct walking animation for the direction.
-    // Assumes your Animator has parameters or states:
-    // WalkLeft, WalkRight, WalkUp, WalkDown
+    // Animator states are named: up, down, left, right
     // -----------------------------------------------------------------
     private void PlayAnimation(Direction dir)
     {
@@ -221,12 +214,11 @@ public class PacStudentController : MonoBehaviour
 
         switch (dir)
         {
-            case Direction.Up:    animator.Play("up"); break;
-            case Direction.Down:  animator.Play("down"); break;
-            case Direction.Left:  animator.Play("left"); break;
+            case Direction.Up:    animator.Play("up");    break;
+            case Direction.Down:  animator.Play("down");  break;
+            case Direction.Left:  animator.Play("left");  break;
             case Direction.Right: animator.Play("right"); break;
         }
-
     }
 
     // -----------------------------------------------------------------
@@ -251,5 +243,4 @@ public class PacStudentController : MonoBehaviour
             movementAudio.Play();
         }
     }
-
 }
