@@ -155,7 +155,10 @@ public class PacStudentController : MonoBehaviour
             if (target.y < 0)      target.y = LevelGrid.Cols - 1;
             else if (target.y >= LevelGrid.Cols) target.y = 0;
         }
-
+        
+        if (dustEffect != null && !dustEffect.isPlaying)
+        
+            dustEffect.Play();
         // Update grid tracking
         currentGrid = target;
 
@@ -249,18 +252,4 @@ public class PacStudentController : MonoBehaviour
         }
     }
 
-    // -----------------------------------------------------------------
-    // Start dust effect when moving.
-    // -----------------------------------------------------------------
-    void OnEnable()
-    {
-        if (dustEffect != null)
-            dustEffect.Play();
-    }
-
-    void OnDisable()
-    {
-        if (dustEffect != null)
-            dustEffect.Stop();
-    }
 }
