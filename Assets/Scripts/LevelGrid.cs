@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class LevelGrid : MonoBehaviour
 {
+    public static LevelGrid Instance { get; private set; }
+
     private int[,] levelMap =
     {
         {1,2,2,2,2,2,2,2,2,2,2,2,2,7},
@@ -31,6 +33,13 @@ public class LevelGrid : MonoBehaviour
 
     void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         quadrantRows = levelMap.GetLength(0);
         quadrantCols = levelMap.GetLength(1);
     }
@@ -61,6 +70,13 @@ public class LevelGrid : MonoBehaviour
 
         int tile = GetTile(row, col);
         return tile == 0 || tile == 5 || tile == 6;
+    }
+
+    public bool IsTunnel(int row, int col)
+    {
+        if (row != 14 && row != 15) return false;
+        if (col < 0 || col >= Cols) return true;
+        return false;
     }
 
     public Vector2Int WorldToGrid(Vector3 worldPos)
