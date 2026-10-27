@@ -12,4 +12,10 @@ public class StartMenu : MonoBehaviour
         // Load the main game scene
         Debug.Log("Level 2 not implemented as of yet");
     }
+    public void QuitGame()
+    {
+        // Quit the application and return to startscene
+
+        UnityEngine.SceneManagement.SceneManager.LoadScene("StartScene");
+    }
 }
