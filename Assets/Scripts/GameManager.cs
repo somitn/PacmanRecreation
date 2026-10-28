@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -43,6 +45,12 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ParticleSystem deathParticle;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioClip deathClip;
+
+    [Header("Game Over")]
+    [SerializeField] private GameObject gameOverText;
+    [SerializeField] private Button exitButton;
+    [SerializeField] private string levelKey = "Level1";
+    [SerializeField] private float gameOverDelay = 3f;
 
     private int score = 0;
     private int lives = 3;
@@ -160,7 +168,7 @@ public class GameManager : MonoBehaviour
     {
         pelletsLeft--;
         if (pelletsLeft <= 0)
-            Debug.Log("All pellets eaten - game over");
+            GameOver();
     }
 
     public void PowerPelletEaten()
@@ -189,60 +197,42 @@ public class GameManager : MonoBehaviour
         lives--;
         UpdateLifeIcons();
 
-        if (lives <= 0)
-        {
-            Debug.Log("No lives left - game over");
-            State = GameState.GameOver;
-            return;
-        }
-
         StartCoroutine(PacStudentDeathSequence());
     }
 
-   private IEnumerator PacStudentDeathSequence()
+    private IEnumerator PacStudentDeathSequence()
     {
         State = GameState.PacDying;
 
-        // Play death animation + stop movement
         if (pacStudent != null) pacStudent.PlayDeath();
 
-        // Freeze ghosts
         foreach (var g in ghosts)
             if (g != null) g.SetState(GhostState.State.Dead);
 
-        // Death sound
         if (sfxSource != null && deathClip != null)
             sfxSource.PlayOneShot(deathClip);
 
-        // Death particle
         if (deathParticle != null && pacStudent != null)
         {
             deathParticle.transform.position = pacStudent.transform.position;
             deathParticle.Play();
         }
 
-        // Wait for death animation to finish
         yield return new WaitForSeconds(deathDuration);
 
-        // Check for game over BEFORE respawning
         if (lives <= 0)
         {
-            Debug.Log("No lives left - game over");
-            State = GameState.GameOver;
-            yield break;   // stop here, don't respawn
+            GameOver();
+            yield break;
         }
 
-        // Respawn PacStudent
         if (pacStudent != null) pacStudent.Respawn();
 
-        // Reset ghosts
         foreach (var g in ghosts)
             if (g != null) g.ResetToStart();
 
-        // Reset music
         if (audioManager != null) audioManager.PlayNormal();
 
-        // Resume
         State = GameState.Playing;
     }
 
@@ -306,6 +296,52 @@ public class GameManager : MonoBehaviour
             else
                 audioManager.PlayNormal();
         }
+    }
+
+    // ---------------------------------------------------------------
+    // Game Over
+    // ---------------------------------------------------------------
+    public void GameOver()
+    {
+        if (State == GameState.GameOver) return;
+
+        State = GameState.GameOver;
+
+        if (blocker != null) blocker.SetActive(true);
+        if (gameOverText != null) gameOverText.SetActive(true);
+        if (exitButton != null) exitButton.interactable = false;
+        if (cherryController != null) cherryController.CancelInvoke();
+
+        SaveHighScore();
+        StartCoroutine(ReturnToMenu());
+    }
+
+    private void SaveHighScore()
+    {
+        string scoreKey = "HighScore_" + levelKey;
+        string timeKey = "BestTime_" + levelKey;
+
+        int oldScore = PlayerPrefs.GetInt(scoreKey, 0);
+        bool hasTime = PlayerPrefs.HasKey(timeKey);
+        float oldTime = PlayerPrefs.GetFloat(timeKey, 0f);
+
+        bool isBetter =
+            (score > oldScore) ||
+            (score == oldScore && (!hasTime || gameTime < oldTime));
+
+        if (isBetter)
+        {
+            PlayerPrefs.SetInt(scoreKey, score);
+            PlayerPrefs.SetFloat(timeKey, gameTime);
+            PlayerPrefs.Save();
+            Debug.Log("New high score saved");
+        }
+    }
+
+    private IEnumerator ReturnToMenu()
+    {
+        yield return new WaitForSeconds(gameOverDelay);
+        SceneManager.LoadScene("StartScene");
     }
 
     // ---------------------------------------------------------------
