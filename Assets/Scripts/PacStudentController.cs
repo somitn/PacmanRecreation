@@ -17,8 +17,8 @@ public class PacStudentController : MonoBehaviour
     public AudioSource movementAudio;
 
     [Header("Audio Clips")]
-    public AudioClip moveClip;       // moving, not eating
-    public AudioClip eatClip;        // about to eat a pellet
+    public AudioClip moveClip;
+    public AudioClip eatClip;
 
     [Header("One-Shot SFX")]
     public AudioSource effectsAudio;
@@ -43,10 +43,11 @@ public class PacStudentController : MonoBehaviour
     private float lerpProgress;
     private bool isLerping;
 
-    private Vector2Int currentGrid;  // (col, row)
+    private Vector2Int currentGrid;
     private Direction currentInput;
     private Direction lastInput;
     private bool hitWall;
+    private Vector3 spawnPosition;
 
     private enum Direction { None, Up, Down, Left, Right }
 
@@ -56,6 +57,8 @@ public class PacStudentController : MonoBehaviour
         currentGrid = LevelGrid.Instance.WorldToGrid(transform.position);
         transform.position = LevelGrid.Instance.GridToWorld(currentGrid.y, currentGrid.x);
 
+        spawnPosition = transform.position;
+
         currentInput = Direction.None;
         lastInput = Direction.None;
     }
@@ -63,20 +66,16 @@ public class PacStudentController : MonoBehaviour
     // -----------------------------------------------------------------
     void Update()
     {
-        // Freeze unless the game is Playing
         if (GameManager.Instance == null || GameManager.Instance.State != GameManager.GameState.Playing)
             return;
 
-        // 1. Always read input
         Direction pressed = ReadInput();
         if (pressed != Direction.None)
             lastInput = pressed;
 
-        // 2. Decide if not lerping
         if (!isLerping)
             DecideMovement();
 
-        // 3. Advance if lerping
         if (isLerping)
             AdvanceLerp();
     }
@@ -94,7 +93,6 @@ public class PacStudentController : MonoBehaviour
     // -----------------------------------------------------------------
     private void DecideMovement()
     {
-        // Try lastInput first
         if (lastInput != Direction.None)
         {
             if (IsTunnelExit(lastInput))
@@ -113,7 +111,6 @@ public class PacStudentController : MonoBehaviour
             }
         }
 
-        // Fallback: try currentInput
         if (currentInput != Direction.None)
         {
             if (IsTunnelExit(currentInput))
@@ -130,7 +127,6 @@ public class PacStudentController : MonoBehaviour
             }
         }
 
-        // Blocked — stop moving and bump
         StopMoving();
 
         if (!hitWall && currentInput != Direction.None)
@@ -240,8 +236,6 @@ public class PacStudentController : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
-    // Animator states are named: up, down, left, right
-    // -----------------------------------------------------------------
     private void PlayAnimation(Direction dir)
     {
         if (animator == null) return;
@@ -255,8 +249,6 @@ public class PacStudentController : MonoBehaviour
         }
     }
 
-    // -----------------------------------------------------------------
-    // Choose eat vs move clip by what's actually at the target.
     // -----------------------------------------------------------------
     private void PlayMovementAudio(Vector2Int target)
     {
@@ -304,6 +296,42 @@ public class PacStudentController : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
+    // Death + Respawn
+    // -----------------------------------------------------------------
+    public void PlayDeath()
+    {
+        isLerping = false;
+        lerpProgress = 0f;
+
+        if (movementAudio != null) movementAudio.Stop();
+        if (dustEffect != null) dustEffect.Stop();
+
+        if (animator != null)
+        {
+            animator.speed = 1f;
+            animator.Play("dead");
+        }
+    }
+
+    public void Respawn()
+    {
+        transform.position = spawnPosition;
+        currentGrid = LevelGrid.Instance.WorldToGrid(spawnPosition);
+
+        isLerping = false;
+        lerpProgress = 0f;
+        lastInput = Direction.None;
+        currentInput = Direction.None;
+        hitWall = false;
+
+        if (animator != null)
+        {
+            animator.Play("right");
+            animator.speed = 0f;
+        }
+    }
+
+    // -----------------------------------------------------------------
     // Collision handling
     // -----------------------------------------------------------------
     private void OnTriggerEnter2D(Collider2D other)
@@ -311,7 +339,6 @@ public class PacStudentController : MonoBehaviour
         if (GameManager.Instance == null || GameManager.Instance.State != GameManager.GameState.Playing)
             return;
 
-        // Normal pellet
         if (other.CompareTag("Pellet"))
         {
             Destroy(other.gameObject);
@@ -320,7 +347,6 @@ public class PacStudentController : MonoBehaviour
             return;
         }
 
-        // Cherry
         if (other.CompareTag("Cherry"))
         {
             GameManager.Instance.AddScore(100);
@@ -330,7 +356,6 @@ public class PacStudentController : MonoBehaviour
             return;
         }
 
-        // Power pellet
         if (other.CompareTag("PowerPellet"))
         {
             Destroy(other.gameObject);
@@ -339,7 +364,6 @@ public class PacStudentController : MonoBehaviour
             return;
         }
 
-        // Ghost
         if (other.CompareTag("Ghost"))
         {
             GhostState ghost = other.GetComponent<GhostState>();
@@ -347,7 +371,6 @@ public class PacStudentController : MonoBehaviour
 
             if (ghost.CurrentState == GhostState.State.Normal)
             {
-                // PacStudent dies
                 GameManager.Instance.LoseLife();
                 return;
             }
@@ -355,7 +378,6 @@ public class PacStudentController : MonoBehaviour
             if (ghost.CurrentState == GhostState.State.Scared ||
                 ghost.CurrentState == GhostState.State.Recovering)
             {
-                // Eat the ghost
                 PlaySfx(eatGhostClip);
                 GameManager.Instance.EatGhost(ghost);
                 return;

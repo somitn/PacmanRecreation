@@ -39,7 +39,6 @@ public class GameManager : MonoBehaviour
 
     [Header("Death")]
     [SerializeField] private Transform pacStudentTransform;
-    [SerializeField] private Vector3 pacStudentStartPos = new Vector3(-5f, 3f, 0f);
     [SerializeField] private ParticleSystem deathParticle;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioClip deathClip;
@@ -83,9 +82,11 @@ public class GameManager : MonoBehaviour
     {
         if (State != GameState.Playing) return;
 
+        // Game timer
         gameTime += Time.deltaTime;
         UpdateGameTimerText();
 
+        // Scared timer
         if (scaredTimer > 0f)
         {
             scaredTimer -= Time.deltaTime;
@@ -138,6 +139,9 @@ public class GameManager : MonoBehaviour
         if (cherryController != null) cherryController.StartSpawning();
     }
 
+    // ---------------------------------------------------------------
+    // Score
+    // ---------------------------------------------------------------
     public void AddScore(int amount)
     {
         score += amount;
@@ -150,6 +154,9 @@ public class GameManager : MonoBehaviour
             scoreText.text = "Score " + score.ToString("D6");
     }
 
+    // ---------------------------------------------------------------
+    // Pellets
+    // ---------------------------------------------------------------
     public void PelletEaten()
     {
         pelletsLeft--;
@@ -173,6 +180,9 @@ public class GameManager : MonoBehaviour
         if (audioManager != null) audioManager.PlayScared();
     }
 
+    // ---------------------------------------------------------------
+    // Death
+    // ---------------------------------------------------------------
     public void LoseLife()
     {
         if (State != GameState.Playing) return;
@@ -194,31 +204,59 @@ public class GameManager : MonoBehaviour
     {
         State = GameState.PacDying;
 
+        // Play death animation + stop movement
+        PacStudentController pac = pacStudentTransform != null
+            ? pacStudentTransform.GetComponent<PacStudentController>()
+            : null;
+
+        if (pac != null) pac.PlayDeath();
+
+        // Freeze ghosts
         foreach (var g in ghosts)
             if (g != null) g.SetState(GhostState.State.Dead);
 
+        // Death sound
         if (sfxSource != null && deathClip != null)
             sfxSource.PlayOneShot(deathClip);
 
+        // Death particle
         if (deathParticle != null && pacStudentTransform != null)
         {
             deathParticle.transform.position = pacStudentTransform.position;
             deathParticle.Play();
         }
 
+        // Wait for animation
         yield return new WaitForSeconds(2f);
 
-        if (pacStudentTransform != null)
-            pacStudentTransform.position = pacStudentStartPos;
+        // Respawn PacStudent
+        if (pac != null) pac.Respawn();
 
+        // Reset ghosts
         foreach (var g in ghosts)
             if (g != null) g.ResetToStart();
 
+        // Reset music
         if (audioManager != null) audioManager.PlayNormal();
 
+        // Resume
         State = GameState.Playing;
     }
 
+    private void UpdateLifeIcons()
+    {
+        if (lifeIcons == null) return;
+
+        for (int i = 0; i < lifeIcons.Length; i++)
+        {
+            if (lifeIcons[i] != null)
+                lifeIcons[i].SetActive(i < lives);
+        }
+    }
+
+    // ---------------------------------------------------------------
+    // Eat ghost
+    // ---------------------------------------------------------------
     public void EatGhost(GhostState ghost)
     {
         if (State != GameState.Playing) return;
@@ -267,6 +305,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // ---------------------------------------------------------------
+    // Timer
+    // ---------------------------------------------------------------
     private void UpdateGameTimerText()
     {
         if (gameTimerText != null)
@@ -279,16 +320,5 @@ public class GameManager : MonoBehaviour
         int seconds = (int)(t % 60);
         int hundredths = (int)((t * 100) % 100);
         return string.Format("{0:00}:{1:00}:{2:00}", minutes, seconds, hundredths);
-    }
-
-    private void UpdateLifeIcons()
-    {
-        if (lifeIcons == null) return;
-
-        for (int i = 0; i < lifeIcons.Length; i++)
-        {
-            if (lifeIcons[i] != null)
-                lifeIcons[i].SetActive(i < lives);
-        }
     }
 }
