@@ -2,39 +2,33 @@ using UnityEngine;
 
 public class AudioManager : MonoBehaviour
 {
-    [Header("Audio Sources")]
     public AudioSource introSource;
     public AudioSource normalSource;
+    public AudioSource scaredSource;
+    public AudioSource deadSource;
 
-    [Header("Settings")]
-    public float introMaxDuration = 3f;
-
-    private float timer = 0f;
-    private bool switched = false;
-
-    void Start()
+    public void PlayIntro()
     {
-        if (introSource != null)
-        {
-            introSource.Play();
-        }
+        if (introSource != null) introSource.Play();
     }
 
-    void Update()
+    public void PlayNormal()
     {
-        if (introSource == null || normalSource == null) return;
-        if (switched) return;
+        if (introSource != null) introSource.Stop();
+        if (scaredSource != null) scaredSource.Stop();
+        if (deadSource != null) deadSource.Stop();
+        if (normalSource != null && !normalSource.isPlaying) normalSource.Play();
+    }
 
-        timer += Time.deltaTime;
+    public void PlayScared()
+    {
+        if (normalSource != null) normalSource.Stop();
+        if (scaredSource != null) scaredSource.Play();
+    }
 
-        bool introFinished = !introSource.isPlaying;
-        bool timeUp = timer >= introMaxDuration;
-
-        if (introFinished || timeUp)
-        {
-            introSource.Stop();
-            normalSource.Play();
-            switched = true;
-        }
+    public void PlayDead()
+    {
+        if (normalSource != null) normalSource.Stop();
+        if (deadSource != null) deadSource.Play();
     }
 }

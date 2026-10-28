@@ -85,7 +85,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: scared right
+  m_Name: scaredright
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -186,7 +186,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: scared up
+  m_Name: scaredup
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -283,7 +283,7 @@ AnimatorStateMachine:
     m_Position: {x: 587.124, y: 221.36758, z: 0}
   - serializedVersion: 1
     m_State: {fileID: -1394736680396565820}
-    m_Position: {x: 503.51135, y: 145.84647, z: 0}
+    m_Position: {x: 500, y: 140, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 3794370638495901982}
     m_Position: {x: 409.10992, y: 19.078827, z: 0}
@@ -313,7 +313,7 @@ AnimatorState:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: scared down
+  m_Name: scareddown
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []

@@ -22,6 +22,15 @@ public class PacStudentController : MonoBehaviour
 
     [Header("Dust Effect")]
     public ParticleSystem dustEffect;
+    [Header("one-shot sfx")]
+    public AudioSource effectAudio;
+    public AudioClip cherryClip;
+    public AudioClip wallClip;
+    public AudioClip deathClip;
+    public AudioClip eatGhostClip;
+
+    [Header("Other References")]
+    public CherryController cherryController;
 
     // ---------------------------------------------------------------
     // Movement state
@@ -242,7 +251,9 @@ public class PacStudentController : MonoBehaviour
 
         if (other.CompareTag("PowerPellet"))
         {
-            // Step 6 will handle: score +50, scared mode, music, timer
+            Destroy(other.gameObject);
+            GameManager.Instance.AddScore(50);
+            GameManager.Instance.PowerPelletEaten();
             return;
         }
     }
