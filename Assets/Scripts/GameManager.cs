@@ -38,7 +38,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float recoverAt = 3f;
 
     [Header("Death")]
-    [SerializeField] private Transform pacStudentTransform;
+    [SerializeField] private PacStudentController pacStudent;
+    [SerializeField] private float deathDuration = 1.5f;
     [SerializeField] private ParticleSystem deathParticle;
     [SerializeField] private AudioSource sfxSource;
     [SerializeField] private AudioClip deathClip;
@@ -82,11 +83,9 @@ public class GameManager : MonoBehaviour
     {
         if (State != GameState.Playing) return;
 
-        // Game timer
         gameTime += Time.deltaTime;
         UpdateGameTimerText();
 
-        // Scared timer
         if (scaredTimer > 0f)
         {
             scaredTimer -= Time.deltaTime;
@@ -200,16 +199,12 @@ public class GameManager : MonoBehaviour
         StartCoroutine(PacStudentDeathSequence());
     }
 
-    private IEnumerator PacStudentDeathSequence()
+   private IEnumerator PacStudentDeathSequence()
     {
         State = GameState.PacDying;
 
         // Play death animation + stop movement
-        PacStudentController pac = pacStudentTransform != null
-            ? pacStudentTransform.GetComponent<PacStudentController>()
-            : null;
-
-        if (pac != null) pac.PlayDeath();
+        if (pacStudent != null) pacStudent.PlayDeath();
 
         // Freeze ghosts
         foreach (var g in ghosts)
@@ -220,17 +215,25 @@ public class GameManager : MonoBehaviour
             sfxSource.PlayOneShot(deathClip);
 
         // Death particle
-        if (deathParticle != null && pacStudentTransform != null)
+        if (deathParticle != null && pacStudent != null)
         {
-            deathParticle.transform.position = pacStudentTransform.position;
+            deathParticle.transform.position = pacStudent.transform.position;
             deathParticle.Play();
         }
 
-        // Wait for animation
-        yield return new WaitForSeconds(2f);
+        // Wait for death animation to finish
+        yield return new WaitForSeconds(deathDuration);
+
+        // Check for game over BEFORE respawning
+        if (lives <= 0)
+        {
+            Debug.Log("No lives left - game over");
+            State = GameState.GameOver;
+            yield break;   // stop here, don't respawn
+        }
 
         // Respawn PacStudent
-        if (pac != null) pac.Respawn();
+        if (pacStudent != null) pacStudent.Respawn();
 
         // Reset ghosts
         foreach (var g in ghosts)

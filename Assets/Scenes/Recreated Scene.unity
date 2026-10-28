@@ -32031,7 +32031,7 @@ Transform:
   m_GameObject: {fileID: 1231339798}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 6, y: -10, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -58961,7 +58961,8 @@ MonoBehaviour:
   cherryController: {fileID: 1793259921}
   scaredDuration: 10
   recoverAt: 3
-  pacStudentTransform: {fileID: 704642898}
+  pacStudent: {fileID: 704642901}
+  deathDuration: 1.5
   deathParticle: {fileID: 1269702001}
   sfxSource: {fileID: 944183119}
   deathClip: {fileID: 8300000, guid: 1bbe6b1c0596c414c9c311a71681b8e0, type: 3}

@@ -303,7 +303,7 @@ public class PacStudentController : MonoBehaviour
         isLerping = false;
         lerpProgress = 0f;
 
-        if (movementAudio != null) movementAudio.Stop();
+        if (movementAudio != null) movementAudio.Stop(); movementAudio.clip = null;
         if (dustEffect != null) dustEffect.Stop();
 
         if (animator != null)
