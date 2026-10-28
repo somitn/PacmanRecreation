@@ -1121,7 +1121,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 968130986}
         m_TargetAssemblyTypeName: StartMenu, Assembly-CSharp
-        m_MethodName: Playlevelone
+        m_MethodName: PlayLevel1
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2170,7 +2170,7 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 968130986}
         m_TargetAssemblyTypeName: StartMenu, Assembly-CSharp
-        m_MethodName: Playleveltwo
+        m_MethodName: PlayLevel2
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2928,6 +2928,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: MenuManager
       objectReference: {fileID: 0}
+    - target: {fileID: 8478183992135997345, guid: fe7b74d3bf4d051459d4ea25c7885b39, type: 3}
+      propertyPath: level1BestTimeText
+      value: 
+      objectReference: {fileID: 1985087411}
+    - target: {fileID: 8478183992135997345, guid: fe7b74d3bf4d051459d4ea25c7885b39, type: 3}
+      propertyPath: level2BestTimeText
+      value: 
+      objectReference: {fileID: 428125078}
+    - target: {fileID: 8478183992135997345, guid: fe7b74d3bf4d051459d4ea25c7885b39, type: 3}
+      propertyPath: level1HighScoreText
+      value: 
+      objectReference: {fileID: 816086668}
+    - target: {fileID: 8478183992135997345, guid: fe7b74d3bf4d051459d4ea25c7885b39, type: 3}
+      propertyPath: level2HighScoreText
+      value: 
+      objectReference: {fileID: 942392729}
     - target: {fileID: 8844705265342805387, guid: fe7b74d3bf4d051459d4ea25c7885b39, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
