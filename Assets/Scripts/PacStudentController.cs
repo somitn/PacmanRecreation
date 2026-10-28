@@ -231,8 +231,14 @@ public class PacStudentController : MonoBehaviour
         {
             movementAudio.Play();
         }
+        
     }
-
+    //play sfx for one-shot events like eating a cherry, hitting a wall, dying, or eating a ghost
+    private void PlaySfx(AudioClip clip)
+    {
+        if (effectAudio is null || clip is null) return;
+        effectAudio.PlayOneShot(clip);
+    }
     // -----------------------------------------------------------------
     // 3B: Pellet collision
     // -----------------------------------------------------------------
@@ -254,6 +260,16 @@ public class PacStudentController : MonoBehaviour
             Destroy(other.gameObject);
             GameManager.Instance.AddScore(50);
             GameManager.Instance.PowerPelletEaten();
+            return;
+        }
+        if (other.CompareTag("Cherry"))
+        {
+            GameManager.Instance.AddScore(100);
+            PlaySfx(cherryClip);
+            if (cherryController != null)
+            {
+                cherryController.DestroyCherry();
+            }   
             return;
         }
     }
