@@ -3,7 +3,8 @@ using UnityEngine;
 /// <summary>
 /// Moves PacStudent on the grid using WASD input.
 /// Uses linear lerping between grid cells (frame-rate independent).
-/// No Rigidbody physics — only transform.position is modified.
+/// No Rigidbody physics for movement — only transform.position is modified.
+/// Rigidbody2D is set to Kinematic purely for collision detection.
 /// </summary>
 public class PacStudentController : MonoBehaviour
 {
@@ -27,26 +28,21 @@ public class PacStudentController : MonoBehaviour
     // ---------------------------------------------------------------
     private Vector3 lerpStart;
     private Vector3 lerpTarget;
-    private float lerpProgress;      // 0 to 1
+    private float lerpProgress;
     private bool isLerping;
 
     private Vector2Int currentGrid;  // (col, row)
-    private Direction currentInput;  // the direction we're actually moving
-    private Direction lastInput;     // the last key the player pressed
+    private Direction currentInput;
+    private Direction lastInput;
 
-    // Directions
     private enum Direction { None, Up, Down, Left, Right }
 
     // -----------------------------------------------------------------
     void Start()
     {
-        // Determine starting grid cell from our world position
         currentGrid = LevelGrid.Instance.WorldToGrid(transform.position);
-
-        // Snap to the exact center of the grid cell
         transform.position = LevelGrid.Instance.GridToWorld(currentGrid.y, currentGrid.x);
 
-        // PacStudent starts facing right but does not move until input
         currentInput = Direction.None;
         lastInput = Direction.None;
     }
@@ -54,28 +50,30 @@ public class PacStudentController : MonoBehaviour
     // -----------------------------------------------------------------
     void Update()
     {
-        // 1. Always read input — even while lerping
+        // 3A: Freeze unless the game is Playing
+        if (GameManager.Instance == null || GameManager.Instance.State != GameManager.GameState.Playing)
+            return;
+
+        // 1. Always read input
         Direction pressed = ReadInput();
         if (pressed != Direction.None)
         {
             lastInput = pressed;
         }
 
-        // 2. If not currently lerping, decide what to do next
+        // 2. Decide if not lerping
         if (!isLerping)
         {
             DecideMovement();
         }
 
-        // 3. If lerping, advance the lerp
+        // 3. Advance if lerping
         if (isLerping)
         {
             AdvanceLerp();
         }
     }
 
-    // -----------------------------------------------------------------
-    // Read WASD input into a Direction
     // -----------------------------------------------------------------
     private Direction ReadInput()
     {
@@ -87,12 +85,8 @@ public class PacStudentController : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
-    // Called when PacStudent is at a grid cell and not lerping.
-    // Decides which direction to move (or stop).
-    // -----------------------------------------------------------------
     private void DecideMovement()
     {
-        // Try lastInput first
         if (lastInput != Direction.None && CanMove(lastInput))
         {
             currentInput = lastInput;
@@ -100,19 +94,15 @@ public class PacStudentController : MonoBehaviour
             return;
         }
 
-        // Fallback: try currentInput
         if (currentInput != Direction.None && CanMove(currentInput))
         {
             StartLerp(currentInput);
             return;
         }
 
-        // Blocked — stop moving
         StopMoving();
     }
 
-    // -----------------------------------------------------------------
-    // Can PacStudent move in this direction from currentGrid?
     // -----------------------------------------------------------------
     private bool CanMove(Direction dir)
     {
@@ -120,9 +110,6 @@ public class PacStudentController : MonoBehaviour
         return LevelGrid.Instance.IsWalkable(target.y, target.x);
     }
 
-    // -----------------------------------------------------------------
-    // Get the grid cell that's one step in the given direction.
-    // Note: world UP = grid row -1, world RIGHT = grid col +1, etc.
     // -----------------------------------------------------------------
     private Vector2Int GetTargetCell(Vector2Int from, Direction dir)
     {
@@ -137,19 +124,15 @@ public class PacStudentController : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
-    // Start a lerp from current position to the target grid cell.
-    // -----------------------------------------------------------------
     private void StartLerp(Direction dir)
     {
         Vector2Int target = GetTargetCell(currentGrid, dir);
 
-        // Start dust when we begin moving
         if (dustEffect != null && !dustEffect.isPlaying)
         {
             dustEffect.Play();
         }
 
-        // Update grid tracking
         currentGrid = target;
 
         lerpStart = transform.position;
@@ -159,36 +142,27 @@ public class PacStudentController : MonoBehaviour
 
         if (animator != null) animator.speed = 1f;
 
-        // Animation
         PlayAnimation(dir);
-
-        // Audio — choose clip based on whether the target has a pellet
         PlayMovementAudio(target);
     }
 
     // -----------------------------------------------------------------
-    // Advance the lerp by moveSpeed (tiles per second) * deltaTime
-    // -----------------------------------------------------------------
     private void AdvanceLerp()
     {
         float step = moveSpeed * Time.deltaTime;
-        lerpProgress += step;   // progress is in "tiles", not 0-1
+        lerpProgress += step;
 
-        // The distance is 1 tile, so progress goes 0 -> 1
         float t = Mathf.Clamp01(lerpProgress);
         transform.position = Vector3.Lerp(lerpStart, lerpTarget, t);
 
         if (lerpProgress >= 1f)
         {
-            // Snap to target to avoid drift
             transform.position = lerpTarget;
             isLerping = false;
             lerpProgress = 0f;
         }
     }
 
-    // -----------------------------------------------------------------
-    // Stop moving — called when blocked in both directions.
     // -----------------------------------------------------------------
     private void StopMoving()
     {
@@ -205,7 +179,6 @@ public class PacStudentController : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
-    // Play the correct walking animation for the direction.
     // Animator states are named: up, down, left, right
     // -----------------------------------------------------------------
     private void PlayAnimation(Direction dir)
@@ -222,15 +195,22 @@ public class PacStudentController : MonoBehaviour
     }
 
     // -----------------------------------------------------------------
-    // Play movement audio. If the target cell has a pellet, play the
-    // eat clip; otherwise the move clip.
+    // 3C: Choose eat vs move clip by what's actually at the target.
     // -----------------------------------------------------------------
     private void PlayMovementAudio(Vector2Int target)
     {
         if (movementAudio == null) return;
 
-        int tile = LevelGrid.Instance.GetTile(target.y, target.x);
-        AudioClip clipToPlay = (tile == 5 || tile == 6) ? eatClip : moveClip;
+        Vector3 targetWorld = LevelGrid.Instance.GridToWorld(target.y, target.x);
+        Collider2D hit = Physics2D.OverlapPoint(targetWorld);
+
+        bool pelletAhead = false;
+        if (hit != null)
+        {
+            pelletAhead = hit.CompareTag("Pellet") || hit.CompareTag("PowerPellet");
+        }
+
+        AudioClip clipToPlay = pelletAhead ? eatClip : moveClip;
 
         if (clipToPlay != null && movementAudio.clip != clipToPlay)
         {
@@ -241,6 +221,29 @@ public class PacStudentController : MonoBehaviour
         else if (clipToPlay != null && !movementAudio.isPlaying)
         {
             movementAudio.Play();
+        }
+    }
+
+    // -----------------------------------------------------------------
+    // 3B: Pellet collision
+    // -----------------------------------------------------------------
+    private void OnTriggerEnter2D(Collider2D other)
+    {
+        if (GameManager.Instance == null || GameManager.Instance.State != GameManager.GameState.Playing)
+            return;
+
+        if (other.CompareTag("Pellet"))
+        {
+            Destroy(other.gameObject);
+            GameManager.Instance.AddScore(10);
+            GameManager.Instance.PelletEaten();
+            return;
+        }
+
+        if (other.CompareTag("PowerPellet"))
+        {
+            // Step 6 will handle: score +50, scared mode, music, timer
+            return;
         }
     }
 }
