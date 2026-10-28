@@ -22,13 +22,21 @@ public class AudioManager : MonoBehaviour
 
     public void PlayScared()
     {
+        if (introSource != null) introSource.Stop();
         if (normalSource != null) normalSource.Stop();
-        if (scaredSource != null) scaredSource.Play();
+        if (deadSource != null) deadSource.Stop();
+
+        if (scaredSource != null && !scaredSource.isPlaying)
+            scaredSource.Play();
     }
 
     public void PlayDead()
     {
+        if (introSource != null) introSource.Stop();
         if (normalSource != null) normalSource.Stop();
-        if (deadSource != null) deadSource.Play();
+        if (scaredSource != null) scaredSource.Stop();
+
+        if (deadSource != null && !deadSource.isPlaying)
+            deadSource.Play();
     }
 }

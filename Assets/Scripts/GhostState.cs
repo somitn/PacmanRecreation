@@ -31,6 +31,11 @@ public class GhostState : MonoBehaviour
         }
     }
 
+    public void KillGhost()
+    {
+        SetState(State.Dead);
+    }
+
     public void ResetToStart()
     {
         transform.position = startPosition;

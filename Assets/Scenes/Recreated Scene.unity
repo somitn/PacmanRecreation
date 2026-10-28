@@ -20100,7 +20100,7 @@ MonoBehaviour:
   movementAudio: {fileID: 704642902}
   moveClip: {fileID: 8300000, guid: 83c95e99d5c10cf458684325a12db63f, type: 3}
   eatClip: {fileID: 8300000, guid: 4416a8a577a310f40be8ec60f510e68b, type: 3}
-  effectsAudio: {fileID: 704642902}
+  effectsAudio: {fileID: 704642905}
   cherryClip: {fileID: 8300000, guid: db324656a43641f41ab4f0448a3374bb, type: 3}
   wallClip: {fileID: 8300000, guid: 50a7d55edefd48e4486889d1d63afcee, type: 3}
   deathClip: {fileID: 8300000, guid: 1bbe6b1c0596c414c9c311a71681b8e0, type: 3}
@@ -32031,7 +32031,7 @@ Transform:
   m_GameObject: {fileID: 1231339798}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6, y: -10, z: 0}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -58961,6 +58961,11 @@ MonoBehaviour:
   cherryController: {fileID: 1793259921}
   scaredDuration: 10
   recoverAt: 3
+  pacStudentTransform: {fileID: 1308036802}
+  pacStudentStartPos: {x: -5, y: 3, z: 0}
+  deathParticle: {fileID: 1269702001}
+  sfxSource: {fileID: 944183119}
+  deathClip: {fileID: 8300000, guid: 1bbe6b1c0596c414c9c311a71681b8e0, type: 3}
 --- !u!4 &1935872549
 Transform:
   m_ObjectHideFlags: 0

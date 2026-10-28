@@ -37,6 +37,13 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float scaredDuration = 10f;
     [SerializeField] private float recoverAt = 3f;
 
+    [Header("Death")]
+    [SerializeField] private Transform pacStudentTransform;
+    [SerializeField] private Vector3 pacStudentStartPos = new Vector3(-5f, 3f, 0f);
+    [SerializeField] private ParticleSystem deathParticle;
+    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] private AudioClip deathClip;
+
     private int score = 0;
     private int lives = 3;
     private int pelletsLeft;
@@ -66,6 +73,7 @@ public class GameManager : MonoBehaviour
 
         UpdateScoreText();
         UpdateGameTimerText();
+        UpdateLifeIcons();
 
         State = GameState.Countdown;
         StartCoroutine(RoundStart());
@@ -165,6 +173,100 @@ public class GameManager : MonoBehaviour
         if (audioManager != null) audioManager.PlayScared();
     }
 
+    public void LoseLife()
+    {
+        if (State != GameState.Playing) return;
+
+        lives--;
+        UpdateLifeIcons();
+
+        if (lives <= 0)
+        {
+            Debug.Log("No lives left - game over");
+            State = GameState.GameOver;
+            return;
+        }
+
+        StartCoroutine(PacStudentDeathSequence());
+    }
+
+    private IEnumerator PacStudentDeathSequence()
+    {
+        State = GameState.PacDying;
+
+        foreach (var g in ghosts)
+            if (g != null) g.SetState(GhostState.State.Dead);
+
+        if (sfxSource != null && deathClip != null)
+            sfxSource.PlayOneShot(deathClip);
+
+        if (deathParticle != null && pacStudentTransform != null)
+        {
+            deathParticle.transform.position = pacStudentTransform.position;
+            deathParticle.Play();
+        }
+
+        yield return new WaitForSeconds(2f);
+
+        if (pacStudentTransform != null)
+            pacStudentTransform.position = pacStudentStartPos;
+
+        foreach (var g in ghosts)
+            if (g != null) g.ResetToStart();
+
+        if (audioManager != null) audioManager.PlayNormal();
+
+        State = GameState.Playing;
+    }
+
+    public void EatGhost(GhostState ghost)
+    {
+        if (State != GameState.Playing) return;
+
+        AddScore(300);
+        ghost.KillGhost();
+
+        if (audioManager != null) audioManager.PlayDead();
+
+        StartCoroutine(RespawnGhost(ghost, 3f));
+        StartCoroutine(CheckGhostMusicAfterDelay(3.5f));
+    }
+
+    private IEnumerator RespawnGhost(GhostState ghost, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        if (ghost != null)
+        {
+            ghost.ResetToStart();
+
+            if (scaredTimer > recoverAt)
+                ghost.SetState(GhostState.State.Scared);
+            else if (scaredTimer > 0)
+                ghost.SetState(GhostState.State.Recovering);
+            else
+                ghost.SetState(GhostState.State.Normal);
+        }
+    }
+
+    private IEnumerator CheckGhostMusicAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+
+        bool anyDead = false;
+        foreach (var g in ghosts)
+            if (g != null && g.CurrentState == GhostState.State.Dead)
+                anyDead = true;
+
+        if (!anyDead)
+        {
+            if (scaredTimer > 0)
+                audioManager.PlayScared();
+            else
+                audioManager.PlayNormal();
+        }
+    }
+
     private void UpdateGameTimerText()
     {
         if (gameTimerText != null)
@@ -177,5 +279,16 @@ public class GameManager : MonoBehaviour
         int seconds = (int)(t % 60);
         int hundredths = (int)((t * 100) % 100);
         return string.Format("{0:00}:{1:00}:{2:00}", minutes, seconds, hundredths);
+    }
+
+    private void UpdateLifeIcons()
+    {
+        if (lifeIcons == null) return;
+
+        for (int i = 0; i < lifeIcons.Length; i++)
+        {
+            if (lifeIcons[i] != null)
+                lifeIcons[i].SetActive(i < lives);
+        }
     }
 }
